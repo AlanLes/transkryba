@@ -184,6 +184,8 @@ FAL_KEY=fal_xxxxxxxxxxxx
 ## Planned Extensions
 
 - [ ] Language selector in UI
+- [ ] Model selector in UI (choose fal.ai transcription model with estimated price per minute)
+- [ ] Send transcription via email
 - [ ] Transcription history (localStorage or database)
 - [ ] Export to .txt file
 - [ ] Drag & drop upload
