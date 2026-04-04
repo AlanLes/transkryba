@@ -21,7 +21,7 @@
 
 You record a voice note. You need the text. You don't want to type it yourself.
 
-**Transkryba** takes your audio file, sends it through OpenAI's Whisper model via [fal.ai](https://fal.ai), and returns a clean, accurate transcription — no account required, no subscriptions, no nonsense. Just upload, click, copy.
+**Transkryba** takes your audio file, sends it through OpenAI's Whisper model via [fal.ai](https://fal.ai), and returns a clean, accurate transcription. Just upload, click, copy.
 
 Originally built for transcribing Polish voice recorder files (`.m4a`), but works with any language Whisper supports across all common audio formats.
 
@@ -54,11 +54,11 @@ Originally built for transcribing Polish voice recorder files (`.m4a`), but work
 
 ## Quick Start
 
-**Prerequisites:** Node.js 18+, a [fal.ai API key](https://fal.ai/dashboard/keys) (free tier available)
+**Prerequisites:** Node.js 18+, a [fal.ai](https://fal.ai) account with an API key (pay-as-you-go, transcription costs are very low)
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/your-username/transkryba.git
+git clone https://github.com/AlanLes/transkryba.git
 cd transkryba
 
 # 2. Install dependencies
@@ -84,7 +84,7 @@ Create a `.env.local` file in the project root:
 FAL_KEY=fal_xxxxxxxxxxxxxxxxxxxx
 ```
 
-Get your API key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys). The key is never exposed to the browser — all requests go through a secure server-side proxy.
+Get your API key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys). fal.ai uses a pay-as-you-go model — you'll need to create an account and add a small credit. Transcription is priced per minute of audio and is very affordable. The key is never exposed to the browser — all requests go through a secure server-side proxy.
 
 ---
 
@@ -136,6 +136,8 @@ transkryba/
 The core transcription flow is working. Here's what's planned next:
 
 - [ ] Language selector — choose any Whisper-supported language from the UI
+- [ ] Model selector — pick from available fal.ai transcription models with estimated cost per minute displayed
+- [ ] Send transcription via email
 - [ ] Drag & drop file upload
 - [ ] Export transcription as `.txt`
 - [ ] Upload progress bar
