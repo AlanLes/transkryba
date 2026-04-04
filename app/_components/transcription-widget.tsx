@@ -29,7 +29,7 @@ export default function TranscriptionWidget() {
         onReset={handleReset}
       />
       {error && <ErrorAlert message={error} />}
-      {transcription && <TranscriptionResult text={transcription} />}
+      {transcription !== null && <TranscriptionResult text={transcription} />}
     </>
   );
 }
