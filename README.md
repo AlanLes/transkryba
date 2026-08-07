@@ -28,24 +28,25 @@ Skróty są dwa i robią dokładnie to samo — różnią się wyłącznie silni
 
 ### Ścieżka A: gotowe pliki `.shortcut` (bez Maca)
 
-Pliki `.shortcut` w tym repo są już podpisane, ale **bez ostatniej akcji** — App Intent Notatek (*Utwórz notatkę z Markdown*) nie daje się podpisać narzędziem `shortcuts sign` i trzeba go dokleić ręcznie po imporcie.
-
 1. Przenieś plik `.shortcut` na iPhone'a: AirDrop, iCloud Drive albo Wiadomości do siebie.
 2. Stuknij plik → aplikacja **Skróty** zaproponuje import → przewiń podgląd i potwierdź **Dodaj skrót**.
-3. Otwórz skrót do edycji i na końcu dodaj akcję **Utwórz notatkę z Markdown**, podłączając:
-   - treść Markdown → wyjście **ostatniej** akcji **Tekst** (tej składającej tytuł + datę + transkrypcję),
-   - nazwa → zmienna `Tytul`,
-   - folder → wybierz z listy folder o nazwie ze Słownika `NOTES_FOLDER` (domyślnie `Transkryba`) — pole jest selektorem obiektu, nie polem tekstowym.
-
-   Zmienną `Tytul` i Słownik z kluczami znajdziesz na górze skrótu — szczegóły w sekcji [Klucze API](#klucze-api).
+3. Sprawdź ostatnią akcję **Utwórz notatkę**: pole „Folder" to selektor obiektu i po imporcie potrafi być puste — wybierz wtedy folder z listy (domyślnie `Transkryba`).
 
 > **Uwaga:** jeśli w bibliotece istnieje już skrót o tej samej nazwie, iOS potrafi po cichu pominąć import. Przed wgraniem nowej wersji usuń starą ręcznie.
 
 ### Ścieżka B: podpisz `.xml` samodzielnie na Macu
 
-Pliki `.xml` to niepodpisane plisty skrótów — iOS ich bezpośrednio nie zaimportuje. Podpisuje się je wbudowanym w macOS narzędziem `shortcuts` (nic nie trzeba instalować). Haczyk: ostatnia akcja — App Intent Notatek **Utwórz notatkę z Markdown** (`com.apple.Notes.CreateNoteFromMarkdownLinkAction`) — nie daje się podpisać, więc `shortcuts sign` na surowym `.xml` zawsze kończy się błędem `This shortcut can't be shared because it contains unsupported features.`
+Pliki `.xml` to niepodpisane plisty skrótów — iOS ich bezpośrednio nie zaimportuje. Podpisuje się je wbudowanym w macOS narzędziem `shortcuts` (nic nie trzeba instalować):
 
-Dlatego procedura usuwa ostatnią akcję przed podpisaniem (dodasz ją ręcznie po imporcie, jak w ścieżce A):
+```bash
+plutil -convert binary1 "Transkryba Groq.xml" -o /tmp/TranskrybaGroq.shortcut
+shortcuts sign --mode anyone \
+  --input /tmp/TranskrybaGroq.shortcut \
+  --output "Transkryba Groq.shortcut"
+# Wariant Scribe analogicznie
+```
+
+Akcją zapisu jest klasyczne **Utwórz notatkę** (`com.apple.mobilenotes.SharingExtension`), które — w odróżnieniu od App Intentu *Utwórz notatkę z Markdown* używanego we wcześniejszych wersjach — powinno podpisywać się w całości. Gdyby `shortcuts sign` mimo to zgłosił `This shortcut can't be shared because it contains unsupported features.`, użyj procedury awaryjnej: usuń ostatnią akcję przed podpisaniem i doklej ją ręcznie po imporcie:
 
 ```bash
 python3 - <<'PY'
@@ -53,7 +54,7 @@ import plistlib
 from pathlib import Path
 data = plistlib.loads(Path("Transkryba Groq.xml").read_bytes())
 assert data["WFWorkflowActions"][-1]["WFWorkflowActionIdentifier"] == \
-    "com.apple.Notes.CreateNoteFromMarkdownLinkAction"
+    "com.apple.mobilenotes.SharingExtension"
 data["WFWorkflowActions"].pop()
 # XML + plutil — czysty binary1 od Apple; FMT_BINARY z plistlib bywa odrzucany
 Path("/tmp/TranskrybaGroq-signable.plist").write_bytes(
@@ -65,14 +66,13 @@ plutil -convert binary1 /tmp/TranskrybaGroq-signable.plist \
 shortcuts sign --mode anyone \
   --input /tmp/TranskrybaGroq-signable.shortcut \
   --output "Transkryba Groq.shortcut"
-# Wariant Scribe analogicznie
 ```
 
-Klasyczna akcja **Utwórz notatkę** (`is.workflow.actions.createnote`) podpisuje się od razu, ale nie ma pól Markdown / nazwa / folder w tym samym kształcie — nie podmieniaj jej automatycznie w XML.
+Po imporcie doklej wtedy na końcu akcję **Utwórz notatkę**: treść → wyjście ostatniej akcji **Tekst** (tej składającej tytuł + datę + transkrypcję), nazwa → zmienna `Tytul`, folder → wybierz z listy, a „Otwórz po uruchomieniu" zostaw wyłączone.
 
 Po udanym podpisaniu plik urośnie o kilkanaście KB (podpis kryptograficzny). Tryby podpisu: `--mode anyone` — otworzy każdy (zalecane na własnego iPhone'a); `--mode people-who-know-me` — tylko kontakty z Twojego iCloud.
 
-**Na koniec wykonaj kroki 1–3 ze ścieżki A**: przenieś podpisany plik na iPhone'a, zaimportuj i dodaj ręcznie akcję **Utwórz notatkę z Markdown**.
+**Na koniec wykonaj kroki ze ścieżki A**: przenieś podpisany plik na iPhone'a i zaimportuj.
 
 **Inne błędy podpisywania:**
 
@@ -81,7 +81,7 @@ Po udanym podpisaniu plik urośnie o kilkanaście KB (podpis kryptograficzny). T
 * Ostrzeżenia `ERROR: Unrecognized attribute string flag '?'` są zwykle nieszkodliwe, o ile plik wynikowy powstał.
 * Kontrola poprawności XML przed podpisaniem: `plutil -lint "Transkryba Groq.xml"`.
 
-Ostateczność bez Maca: otwórz `.xml` w edytorze i przepisz akcje ręcznie w aplikacji Skróty — przy 36–37 akcjach na wariant to znacznie wolniejsze niż podpisanie.
+Ostateczność bez Maca: otwórz `.xml` w edytorze i przepisz akcje ręcznie w aplikacji Skróty — przy 33–34 akcjach na wariant to znacznie wolniejsze niż podpisanie.
 
 ## Klucze API
 
@@ -110,6 +110,7 @@ Do jednego gestu można przypiąć jeden skrót, ale gesty są dwa — oba waria
 
 ## Znane ograniczenia
 
+* **Treść notatki to zwykły tekst, nie Markdown — celowo.** App Intent *Utwórz notatkę z Markdown* twardo zawija treść co ~90 znaków i każdą linię renderuje jako osobny akapit, przez co zdania łamały się w środku. Klasyczna akcja *Utwórz notatkę* zapisuje tekst bez takich niespodzianek.
 * **Back Tap tylko uruchamia skrót — nie kończy nagrania.** Nagrywanie zatrzymasz stuknięciem w przycisk na ekranie; akcja *Nagraj dźwięk* nie ma trybu automatycznego zakończenia wyzwalanego gestem.
 * **Zapis do Notatek może wymagać odblokowania telefonu** (Face ID / kod przy zablokowanym ekranie).
 * **Folder w Notatkach musi istnieć wcześniej** — inaczej zapis zawiedzie albo notatka trafi do folderu domyślnego.
