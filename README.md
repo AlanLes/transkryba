@@ -1,179 +1,131 @@
-<div align="center">
+# Transkryba
 
-# 🎙️ Transkryba
+[![Licencja: MIT](https://img.shields.io/badge/licencja-MIT-green.svg)](LICENSE)
+![Platforma: iOS](https://img.shields.io/badge/platforma-iOS%20%2B%20macOS%20%28podpisywanie%29-blue.svg)
 
-**AI-powered audio transcription. Upload a file, get text — in seconds.**
+Stukasz w tył iPhone'a, mówisz po polsku, a w Apple Notes ląduje gotowa, zatytułowana notatka. Bez otwierania żadnej aplikacji.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![fal.ai](https://img.shields.io/badge/fal.ai-Whisper-FF6B35?style=flat-square)](https://fal.ai)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+> **EN:** A pair of Apple Shortcuts that turn an iPhone Back Tap into a titled Polish voice note in Apple Notes — cloud speech-to-text plus an AI-generated title, no app required.
 
-[Demo](#demo) · [Quick Start](#quick-start) · [Features](#features) · [Contributing](#contributing)
+## Jak to działa
 
-</div>
+1. **Stuknięcie w tył** (Back Tap) uruchamia skrót.
+2. Skrót **nagrywa dźwięk** — nagranie kończysz stuknięciem w przycisk na ekranie.
+3. Nagranie leci jako `multipart/form-data` do API transkrypcji (Groq Whisper albo ElevenLabs Scribe); pusta odpowiedź kończy się alertem „Transkrypcja nie powiodła się".
+4. Groq `llama-3.3-70b-versatile` generuje krótki polski tytuł (maks. 8 słów).
+5. W wybranym folderze **Apple Notes** powstaje notatka: tytuł, data (`dd.MM.yyyy HH:mm`), pusta linia, transkrypcja.
 
----
+## Dwa warianty
 
-## What is Transkryba?
+Skróty są dwa i robią dokładnie to samo — różnią się wyłącznie silnikiem transkrypcji. Powstały do porównania A/B (który silnik lepiej radzi sobie z Twoją polszczyzną); możesz zainstalować oba i zostawić ten, który wygra.
 
-You record a voice note. You need the text. You don't want to type it yourself.
+| Wariant | Pliki | Silnik transkrypcji | Tytuł | Wymagane klucze |
+|---|---|---|---|---|
+| **Groq** | [`Transkryba Groq.shortcut`](<Transkryba Groq.shortcut>) / [`Transkryba Groq.xml`](<Transkryba Groq.xml>) | Groq `whisper-large-v3` (darmowy tier) | Groq `llama-3.3-70b-versatile` | Groq |
+| **Scribe** | [`Transkryba Scribe.shortcut`](<Transkryba Scribe.shortcut>) / [`Transkryba Scribe.xml`](<Transkryba Scribe.xml>) | ElevenLabs `scribe_v1` | Groq `llama-3.3-70b-versatile` (identyczny) | Groq + ElevenLabs |
 
-**Transkryba** takes your audio file, sends it through OpenAI's Whisper model via [fal.ai](https://fal.ai), and returns a clean, accurate transcription. Just upload, click, copy.
+## Instalacja
 
-Originally built for transcribing Polish voice recorder files (`.m4a`), but works with any language Whisper supports across all common audio formats.
+### Ścieżka A: gotowe pliki `.shortcut` (bez Maca)
 
----
+Pliki `.shortcut` w tym repo są już podpisane, ale **bez ostatniej akcji** — App Intent Notatek (*Utwórz notatkę z Markdown*) nie daje się podpisać narzędziem `shortcuts sign` i trzeba go dokleić ręcznie po imporcie.
 
-## Demo
+1. Przenieś plik `.shortcut` na iPhone'a: AirDrop, iCloud Drive albo Wiadomości do siebie.
+2. Stuknij plik → aplikacja **Skróty** zaproponuje import → przewiń podgląd i potwierdź **Dodaj skrót**.
+3. Otwórz skrót do edycji i na końcu dodaj akcję **Utwórz notatkę z Markdown**, podłączając:
+   - treść Markdown → wyjście **ostatniej** akcji **Tekst** (tej składającej tytuł + datę + transkrypcję),
+   - nazwa → zmienna `Tytul`,
+   - folder → wybierz z listy folder o nazwie ze Słownika `NOTES_FOLDER` (domyślnie `Transkryba`) — pole jest selektorem obiektu, nie polem tekstowym.
 
-> 📸 *Screenshot / GIF coming soon — PRs welcome!*
+   Zmienną `Tytul` i Słownik z kluczami znajdziesz na górze skrótu — szczegóły w sekcji [Klucze API](#klucze-api).
 
----
+> **Uwaga:** jeśli w bibliotece istnieje już skrót o tej samej nazwie, iOS potrafi po cichu pominąć import. Przed wgraniem nowej wersji usuń starą ręcznie.
 
-## Features
+### Ścieżka B: podpisz `.xml` samodzielnie na Macu
 
-| Feature | Status |
-|---|---|
-| Upload audio (M4A, MP3, MP4, WAV, WebM) | ✅ |
-| Transcription via OpenAI Whisper | ✅ |
-| Polish language support (and more) | ✅ |
-| One-click copy to clipboard | ✅ |
-| Dark mode (auto, via `prefers-color-scheme`) | ✅ |
-| API key stays server-side (proxy route) | ✅ |
-| Language selector in UI | 🔜 |
-| Drag & drop upload | 🔜 |
-| Export to `.txt` file | 🔜 |
-| Transcription history | 🔜 |
-| Upload progress indicator | 🔜 |
-| Multiple file support | 🔜 |
+Pliki `.xml` to niepodpisane plisty skrótów — iOS ich bezpośrednio nie zaimportuje. Podpisuje się je wbudowanym w macOS narzędziem `shortcuts` (nic nie trzeba instalować). Haczyk: ostatnia akcja — App Intent Notatek **Utwórz notatkę z Markdown** (`com.apple.Notes.CreateNoteFromMarkdownLinkAction`) — nie daje się podpisać, więc `shortcuts sign` na surowym `.xml` zawsze kończy się błędem `This shortcut can't be shared because it contains unsupported features.`
 
----
-
-## Quick Start
-
-**Prerequisites:** Node.js 18+, a [fal.ai](https://fal.ai) account with an API key (pay-as-you-go, transcription costs are very low)
+Dlatego procedura usuwa ostatnią akcję przed podpisaniem (dodasz ją ręcznie po imporcie, jak w ścieżce A):
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/AlanLes/transkryba.git
-cd transkryba
-
-# 2. Install dependencies
-npm install
-
-# 3. Set up environment
-cp .env.example .env.local
-# → Add your FAL_KEY to .env.local
-
-# 4. Run the dev server
-npm run dev
+python3 - <<'PY'
+import plistlib
+from pathlib import Path
+data = plistlib.loads(Path("Transkryba Groq.xml").read_bytes())
+assert data["WFWorkflowActions"][-1]["WFWorkflowActionIdentifier"] == \
+    "com.apple.Notes.CreateNoteFromMarkdownLinkAction"
+data["WFWorkflowActions"].pop()
+# XML + plutil — czysty binary1 od Apple; FMT_BINARY z plistlib bywa odrzucany
+Path("/tmp/TranskrybaGroq-signable.plist").write_bytes(
+    plistlib.dumps(data, fmt=plistlib.FMT_XML)
+)
+PY
+plutil -convert binary1 /tmp/TranskrybaGroq-signable.plist \
+  -o /tmp/TranskrybaGroq-signable.shortcut
+shortcuts sign --mode anyone \
+  --input /tmp/TranskrybaGroq-signable.shortcut \
+  --output "Transkryba Groq.shortcut"
+# Wariant Scribe analogicznie
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and start transcribing.
+Klasyczna akcja **Utwórz notatkę** (`is.workflow.actions.createnote`) podpisuje się od razu, ale nie ma pól Markdown / nazwa / folder w tym samym kształcie — nie podmieniaj jej automatycznie w XML.
 
----
+Po udanym podpisaniu plik urośnie o kilkanaście KB (podpis kryptograficzny). Tryby podpisu: `--mode anyone` — otworzy każdy (zalecane na własnego iPhone'a); `--mode people-who-know-me` — tylko kontakty z Twojego iCloud.
 
-## Configuration
+**Na koniec wykonaj kroki 1–3 ze ścieżki A**: przenieś podpisany plik na iPhone'a, zaimportuj i dodaj ręcznie akcję **Utwórz notatkę z Markdown**.
 
-Create a `.env.local` file in the project root:
+**Inne błędy podpisywania:**
 
-```bash
-FAL_KEY=fal_xxxxxxxxxxxxxxxxxxxx
-```
+* `The file couldn't be opened because it isn't in the correct format.` — plik wejściowy nie jest binarnym plistem; upewnij się, że podpisujesz wynik `plutil -convert binary1` z procedury, a nie surowy `.xml` ani już podpisany plik z repo.
+* `The file doesn't exist.` mimo że plik istnieje — podaj w `--input` prostą ścieżkę bez spacji (procedura celowo pracuje na plikach w `/tmp`).
+* Ostrzeżenia `ERROR: Unrecognized attribute string flag '?'` są zwykle nieszkodliwe, o ile plik wynikowy powstał.
+* Kontrola poprawności XML przed podpisaniem: `plutil -lint "Transkryba Groq.xml"`.
 
-Get your API key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys). fal.ai uses a pay-as-you-go model — you'll need to create an account and add a small credit. Transcription is priced per minute of audio and is very affordable. The key is never exposed to the browser — all requests go through a secure server-side proxy.
+Ostateczność bez Maca: otwórz `.xml` w edytorze i przepisz akcje ręcznie w aplikacji Skróty — przy 36–37 akcjach na wariant to znacznie wolniejsze niż podpisanie.
 
----
+## Klucze API
 
-## How It Works
+Klucze są w **jednym miejscu**: pierwsza akcja **Słownik** na górze skrótu. Otwórz Skróty → przytrzymaj kafelek → **Edytuj** → znajdź Słownik i podmień wartości:
 
-```
-[Your audio file]
-       ↓ uploaded via fal.storage
-[Secure file URL]
-       ↓ processed by fal-ai/whisper
-[Text transcription]
-       ↓ displayed in the UI
-```
+| Klucz | Wariant | Skąd wziąć / co wpisać |
+|---|---|---|
+| `GROQ_API_KEY` | oba | klucz z https://console.groq.com/keys (Scribe też go potrzebuje — do tytułu) |
+| `ELEVENLABS_API_KEY` | tylko Scribe | klucz z https://elevenlabs.io/app/settings/api-keys |
+| `NOTES_FOLDER` | oba | nazwa folderu w Notatkach (domyślnie `Transkryba`) |
 
-The app uses Next.js App Router with a minimal client bundle — only the interactive transcription widget ships JavaScript to the browser. Everything else is statically prerendered.
+**Załóż folder w Notatkach, zanim uruchomisz skrót pierwszy raz** — skrót sam go nie utworzy.
 
----
+## Pierwsze uruchomienie
 
-## Tech Stack
+Uruchom skrót raz ręcznie z aplikacji Skróty i zezwól na wszystkie prompty: mikrofon, połączenia z `api.groq.com` / `api.elevenlabs.io` oraz dostęp do Notatek. Dopiero potem podpinaj Back Tap — gdy pierwszym uruchomieniem jest gest, ściana promptów zaskakuje, a przypadkowa odmowa kończy się tym samym ogólnym alertem co nieudana transkrypcja. Odmówione zezwolenia zmienisz później w ustawieniach skrótu (zakładka Prywatność).
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19 + Tailwind CSS 4 |
-| Language | TypeScript 5 |
-| AI / Transcription | fal.ai · OpenAI Whisper |
-| Styling | CSS variables · dark mode |
+## Podpięcie pod Stuknięcie w tył
 
----
+**Ustawienia → Dostępność → Dotyk → Stuknięcie w tył**, potem przewiń listę na sam dół do sekcji ze skrótami:
 
-## Project Structure
+* **Stuknij dwukrotnie** → **Transkryba Groq**
+* **Stuknij trzykrotnie** → **Transkryba Scribe**
 
-```
-transkryba/
-├── app/
-│   ├── _components/        # UI components (colocated)
-│   ├── _hooks/             # useTranscription logic
-│   ├── _lib/               # fal.ai client singleton
-│   ├── api/fal/proxy/      # Server-side API proxy
-│   ├── page.tsx            # Home (static, Server Component)
-│   └── layout.tsx          # Root layout
-└── docs/                   # Project documentation
-```
+Do jednego gestu można przypiąć jeden skrót, ale gesty są dwa — oba warianty masz pod ręką jednocześnie, co ułatwia porównanie A/B.
 
----
+## Znane ograniczenia
 
-## Roadmap
+* **Back Tap tylko uruchamia skrót — nie kończy nagrania.** Nagrywanie zatrzymasz stuknięciem w przycisk na ekranie; akcja *Nagraj dźwięk* nie ma trybu automatycznego zakończenia wyzwalanego gestem.
+* **Zapis do Notatek może wymagać odblokowania telefonu** (Face ID / kod przy zablokowanym ekranie).
+* **Folder w Notatkach musi istnieć wcześniej** — inaczej zapis zawiedzie albo notatka trafi do folderu domyślnego.
+* **Pole „Folder" może wymagać ręcznego wskazania po imporcie** — to selektor obiektu, nie pole tekstowe; jeśli po imporcie jest puste, wybierz folder z listy.
+* **Tytuł może pojawić się dwa razy** — trafia do nazwy notatki i do pierwszej linii treści (zabezpieczenie, gdyby iOS zignorował pole nazwy). Przeszkadza? Usuń pierwszy wiersz w akcji **Tekst** tuż przed zapisem.
+* **Wymagany internet** — przy słabym zasięgu żądanie może się urwać i skrót pokaże alert o nieudanej transkrypcji.
+* **Klucze API są w treści skrótu.** Każdy z dostępem do odblokowanego telefonu może je odczytać. Nie udostępniaj plików `.shortcut` z wklejonymi kluczami.
+* **Obsługa błędów jest minimalna** — wykrywany jest tylko pusty tekst transkrypcji; błędy HTTP (zły klucz, limit, 401/429) dają ten sam komunikat.
+* **`model_id` dla ElevenLabs = `scribe_v1`** (wsadowy endpoint `POST /v1/speech-to-text`; warianty „v2" dotyczą trybu realtime). Weryfikacja: `curl -s https://api.elevenlabs.io/v1/models -H "xi-api-key: $ELEVENLABS_API_KEY" | grep -i scribe` — jeśli zwróci inny identyfikator, podmień `model_id` w akcji **Pobierz zawartość URL** wariantu Scribe.
 
-The core transcription flow is working. Here's what's planned next:
+## Skąd się to wzięło
 
-- [ ] Language selector — choose any Whisper-supported language from the UI
-- [ ] Model selector — pick from available fal.ai transcription models with estimated cost per minute displayed
-- [ ] Send transcription via email
-- [ ] Drag & drop file upload
-- [ ] Export transcription as `.txt`
-- [ ] Upload progress bar
-- [ ] Transcription history (localStorage)
-- [ ] Multi-file batch transcription
+Transkryba zaczynała jako webowa aplikacja do transkrypcji audio (Next.js — jest w historii gita, jeśli ktoś ciekaw). Okazało się jednak, że prawdziwy problem to nie „strona do wgrywania plików", tylko szybkie łapanie myśli głosem po polsku — czego Apple nie obsługuje (Voice Memos i Apple Intelligence nie transkrybują polskiego). Dwa skróty rozwiązują to lepiej niż cała aplikacja, więc aplikacja poszła do kosza, a skróty zostały. To gotowe narzędzie osobiste, nie rozwijany produkt.
 
-Have an idea? [Open an issue](../../issues/new) — contributions are very welcome.
+## Licencja i wkład
 
----
+[MIT](LICENSE) — rób z tym, co chcesz.
 
-## Contributing
-
-This project is open source and welcomes contributions of all kinds — bug fixes, new features, UI improvements, docs, and more.
-
-```bash
-# Fork the repo, then:
-git checkout -b feature/your-feature
-# Make your changes
-git commit -m "feat: describe your change"
-git push origin feature/your-feature
-# Open a Pull Request
-```
-
-> [!NOTE]
-> If you're picking up something from the roadmap or issues list, leave a comment so we don't duplicate effort.
-
----
-
-## License
-
-MIT — do whatever you want with it.
-
----
-
-<div align="center">
-
-Built with ❤️ and OpenAI Whisper · Powered by [fal.ai](https://fal.ai)
-
-</div>
+Issues i PR-y mile widziane (literówki, poprawki w plistach, nowe silniki STT), ale bez obietnic aktywnego rozwoju — narzędzie robi to, co miało robić.
