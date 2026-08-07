@@ -30,7 +30,7 @@ Skróty są dwa i robią dokładnie to samo — różnią się wyłącznie silni
 
 1. Przenieś plik `.shortcut` na iPhone'a: AirDrop, iCloud Drive albo Wiadomości do siebie.
 2. Stuknij plik → aplikacja **Skróty** zaproponuje import → przewiń podgląd i potwierdź **Dodaj skrót**.
-3. Sprawdź ostatnią akcję **Utwórz notatkę**: pole „Folder" to selektor obiektu i po imporcie potrafi być puste — wybierz wtedy folder z listy (domyślnie `Transkryba`).
+3. Otwórz skrót do edycji i w ostatniej akcji **Utwórz notatkę** ustaw pole „Folder" — wybierz z listy folder na notatki (np. `Transkryba`). Pole jest po imporcie celowo puste: identyfikator folderu jest specyficzny dla urządzenia i nie da się go zaszyć w pliku.
 
 > **Uwaga:** jeśli w bibliotece istnieje już skrót o tej samej nazwie, iOS potrafi po cichu pominąć import. Przed wgraniem nowej wersji usuń starą ręcznie.
 
@@ -91,9 +91,8 @@ Klucze są w **jednym miejscu**: pierwsza akcja **Słownik** na górze skrótu. 
 |---|---|---|
 | `GROQ_API_KEY` | oba | klucz z https://console.groq.com/keys (Scribe też go potrzebuje — do tytułu) |
 | `ELEVENLABS_API_KEY` | tylko Scribe | klucz z https://elevenlabs.io/app/settings/api-keys |
-| `NOTES_FOLDER` | oba | nazwa folderu w Notatkach (domyślnie `Transkryba`) |
 
-**Załóż folder w Notatkach, zanim uruchomisz skrót pierwszy raz** — skrót sam go nie utworzy.
+Folder docelowy nie jest częścią konfiguracji w Słowniku — wskazujesz go bezpośrednio w polu „Folder" ostatniej akcji **Utwórz notatkę**. **Załóż folder w Notatkach, zanim go wybierzesz** — skrót sam go nie utworzy.
 
 ## Pierwsze uruchomienie
 
@@ -113,8 +112,7 @@ Do jednego gestu można przypiąć jeden skrót, ale gesty są dwa — oba waria
 * **Treść notatki to zwykły tekst, nie Markdown — celowo.** App Intent *Utwórz notatkę z Markdown* twardo zawija treść co ~90 znaków i każdą linię renderuje jako osobny akapit, przez co zdania łamały się w środku. Klasyczna akcja *Utwórz notatkę* zapisuje tekst bez takich niespodzianek.
 * **Back Tap tylko uruchamia skrót — nie kończy nagrania.** Nagrywanie zatrzymasz stuknięciem w przycisk na ekranie; akcja *Nagraj dźwięk* nie ma trybu automatycznego zakończenia wyzwalanego gestem.
 * **Zapis do Notatek może wymagać odblokowania telefonu** (Face ID / kod przy zablokowanym ekranie).
-* **Folder w Notatkach musi istnieć wcześniej** — inaczej zapis zawiedzie albo notatka trafi do folderu domyślnego.
-* **Pole „Folder" może wymagać ręcznego wskazania po imporcie** — to selektor obiektu, nie pole tekstowe; jeśli po imporcie jest puste, wybierz folder z listy.
+* **Folder wskazujesz raz, po imporcie.** Pole „Folder" akcji *Utwórz notatkę* to selektor obiektu z identyfikatorem specyficznym dla urządzenia — plik `.shortcut` nie może go mieć ustawionego. Dopóki go nie wybierzesz, notatki lądują w folderze domyślnym.
 * **Tytuł może pojawić się dwa razy** — trafia do nazwy notatki i do pierwszej linii treści (zabezpieczenie, gdyby iOS zignorował pole nazwy). Przeszkadza? Usuń pierwszy wiersz w akcji **Tekst** tuż przed zapisem.
 * **Wymagany internet** — przy słabym zasięgu żądanie może się urwać i skrót pokaże alert o nieudanej transkrypcji.
 * **Klucze API są w treści skrótu.** Każdy z dostępem do odblokowanego telefonu może je odczytać. Nie udostępniaj plików `.shortcut` z wklejonymi kluczami.
