@@ -40,6 +40,39 @@ Po udanym podpisaniu pliki `.shortcut` urosną o ok. 19 KB (dochodzi podpis kryp
 
 ### Gdy podpisywanie zgłasza błąd
 
+* `Error: This shortcut can't be shared because it contains unsupported features.`
+  Winowajca to ostatnia akcja **Utwórz notatkę z Markdown** (`com.apple.Notes.CreateNoteFromMarkdownLinkAction`) — App Intent Notatek, którego `shortcuts sign` nie potrafi udostępnić (ani `--mode anyone`, ani `people-who-know-me`). Reszta skrótu podpisuje się bez problemu.
+
+  **Workaround (zalecany):** podpisz skrót bez tej jednej akcji, zaimportuj na iPhone'a, potem doklej akcję ręcznie:
+
+  ```bash
+  # Wariant A — przykład; Scribe analogicznie
+  python3 - <<'PY'
+  import plistlib
+  from pathlib import Path
+  data = plistlib.loads(Path("Transkryba Groq.xml").read_bytes())
+  assert data["WFWorkflowActions"][-1]["WFWorkflowActionIdentifier"] == \
+      "com.apple.Notes.CreateNoteFromMarkdownLinkAction"
+  data["WFWorkflowActions"].pop()
+  # XML + plutil — czysty binary1 od Apple; FMT_BINARY z plistlib bywa odrzucany
+  Path("/tmp/TranskrybaGroq-signable.plist").write_bytes(
+      plistlib.dumps(data, fmt=plistlib.FMT_XML)
+  )
+  PY
+  plutil -convert binary1 /tmp/TranskrybaGroq-signable.plist \
+    -o /tmp/TranskrybaGroq-signable.shortcut
+  shortcuts sign --mode anyone \
+    --input /tmp/TranskrybaGroq-signable.shortcut \
+    --output "Transkryba Groq.shortcut"
+  ```
+
+  Po imporcie na iPhonie: Skróty → Edytuj → na końcu dodaj **Utwórz notatkę z Markdown** i podłącz:
+  - treść Markdown → wyjście akcji **Tekst** (tytuł + data + transkrypcja),
+  - nazwa → zmienna `Tytul`,
+  - folder → wartość ze Słownika `NOTES_FOLDER` (albo wskaż folder z listy).
+
+  Klasyczna akcja **Utwórz notatkę** (`is.workflow.actions.createnote`) podpisuje się od razu, ale nie ma pól Markdown / nazwa / folder w tym samym kształcie — nie zamieniaj jej automatycznie w XML, jeśli chcesz zachować zachowanie prototypu.
+
 * `Error: The file couldn't be opened because it isn't in the correct format.`
   Przekonwertuj kopię na binarny plist i podpisz ponownie:
 
@@ -58,7 +91,6 @@ Po udanym podpisaniu pliki `.shortcut` urosną o ok. 19 KB (dochodzi podpis kryp
 * Ostrzeżenia `ERROR: Unrecognized attribute string flag '?'` są zwykle nieszkodliwe, o ile plik wynikowy powstał.
 
 * Kontrola poprawności XML przed podpisaniem: `plutil -lint "Transkryba Groq.xml"`.
-
 ### Tryby podpisu
 
 * `--mode anyone` — plik otworzy każdy (zalecane do przenoszenia na własnego iPhone'a).
